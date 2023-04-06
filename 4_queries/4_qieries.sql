@@ -49,5 +49,60 @@ FROM assistance_requests
 JOIN students ON students.id = student_id
 JOIN cohorts ON cohorts.id = cohort_id
 GROUP BY cohorts.name
-ORDER BY average_assistance_time DESC;
-..
+ORDER BY average_assistance_time DESC
+LIMIT 1;
+
+-- Average Assistance Request Wait Time
+SELECT avg(started_at - created_at) as average_wait_time
+FROM assistance_requests;
+
+-- Total Cohort Assistance Duration
+SELECT cohorts.name, sum(completed_at-started_at) as total_duration
+FROM assistance_requests
+JOIN students ON students.id = student_id
+JOIN cohorts ON cohorts.id = cohort_id
+GROUP BY cohorts.name
+ORDER BY total_duration;
+
+-- Cohort Average Assistance Duration
+SELECT AVG(total_duration) as average_total_duration
+FROM (
+  SELECT SUM(completed_at-started_at) as total_duration
+  FROM assistance_requests
+  JOIN students ON students.id = student_id
+  JOIN cohorts ON cohorts.id = cohort_id
+  GROUP BY cohorts.name
+) as subquery;
+
+-- Most Confusing Assignments
+SELECT assignments.id, name, day, chapter, count(assistance_requests.*) as total_requests
+FROM assignments
+JOIN assistance_requests ON assignment_id = assignments.id
+GROUP BY assignments.id
+ORDER BY total_requests DESC;
+
+-- Total Assignments and duration
+SELECT day, count(assignments.*) as number_of_assignments, sum(duration) as duration
+FROM assignments
+GROUP BY day
+ORDER BY day;
+
+-- Name of Teachers That Assisted
+SELECT DISTINCT teachers.name as teacher, cohorts.name as cohort
+FROM assistance_requests
+JOIN teachers ON teacher_id = teachers.id
+JOIN students ON student_id = students.id
+JOIN cohorts ON cohort_id = cohorts.id
+WHERE cohorts.name = 'JUL02'
+ORDER BY teacher;
+
+-- Name of Teachers and Number of Assistances
+SELECT teachers.name as teacher, cohorts.name as cohort,
+count(assistance_requests.*) as total_assistances
+FROM assistance_requests
+JOIN teachers ON teacher_id = teachers.id
+JOIN students ON student_id = students.id
+JOIN cohorts ON cohort_id = cohorts.id
+WHERE cohorts.name = 'JUL02'
+GROUP BY teachers.name, cohorts.name
+ORDER BY total_assistances DESC;
